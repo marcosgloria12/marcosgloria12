@@ -1,0 +1,226 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap');
+
+:root {
+  --navy: #1a3a5c;
+  --navy-mid: #1e4a74;
+  --navy-light: #2a5f94;
+  --accent: #3d9be9;
+  --accent-light: #e8f4fd;
+  --success: #2a9d5c;
+  --success-bg: #eaf6f0;
+  --warning: #b86a00;
+  --warning-bg: #fef3e2;
+  --danger: #c0392b;
+  --danger-bg: #fdecea;
+  --text-primary: #1a2332;
+  --text-secondary: #5a6a7e;
+  --text-muted: #8e9baa;
+  --bg-page: #f0f4f8;
+  --bg-card: #ffffff;
+  --bg-hover: #f7fafc;
+  --border: #dde4ec;
+  --border-light: #eef2f7;
+  --sidebar-width: 220px;
+  --topbar-height: 56px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --font: 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'DM Serif Display', serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { font-weight: 600; line-height: 1.3; }
+a { color: var(--accent); text-decoration: none; }
+button { font-family: var(--font); cursor: pointer; }
+input, select, textarea { font-family: var(--font); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* Utility classes */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  transition: all 0.15s;
+}
+.btn-primary {
+  background: var(--navy);
+  color: white;
+}
+.btn-primary:hover { background: var(--navy-mid); }
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--bg-hover); }
+.btn-danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid #f5c6c2;
+}
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.badge-diretor { background: #e8f4fd; color: #185fa5; }
+.badge-secretario { background: var(--success-bg); color: #1a7a48; }
+.badge-conselheiro { background: var(--warning-bg); color: var(--warning); }
+.badge-associado { background: #f1f0f8; color: #5b4fa8; }
+.badge-ativo { background: var(--success-bg); color: var(--success); }
+.badge-inativo { background: #f5f5f5; color: var(--text-muted); }
+.badge-urgente { background: var(--danger-bg); color: var(--danger); }
+.badge-aviso { background: var(--warning-bg); color: var(--warning); }
+.badge-informativo { background: var(--accent-light); color: #185fa5; }
+.badge-aberto { background: var(--warning-bg); color: var(--warning); }
+.badge-em_andamento { background: var(--accent-light); color: #185fa5; }
+.badge-resolvido { background: var(--success-bg); color: var(--success); }
+
+.input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(61,155,233,0.12);
+}
+.input::placeholder { color: var(--text-muted); }
+
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+.form-grid { display: grid; gap: 14px; }
+.form-grid-2 { grid-template-columns: 1fr 1fr; }
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+}
+.empty-state svg { margin-bottom: 12px; opacity: 0.4; }
+.empty-state p { font-size: 13px; }
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  color: var(--text-muted);
+  gap: 8px;
+  font-size: 13px;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.25s ease forwards; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--navy);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+  .hide-mobile { display: none !important; }
+}
+
+/* PWA safe area */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .bottom-nav { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+}
+
+/* ===== RESPONSIVE LAYOUT ===== */
+@media (max-width: 768px) {
+  /* Sidebar hidden on mobile by default */
+  aside {
+    position: fixed !important;
+    left: -240px !important;
+    transition: left 0.25s ease !important;
+    height: 100vh !important;
+    z-index: 100 !important;
+  }
+  /* Topbar menu button visible */
+  .menu-btn { display: flex !important; }
+  /* Bottom nav visible on mobile */
+  .bottom-nav { display: flex !important; }
+  /* Stats grid: 2 columns on mobile */
+  .stats-grid-4 { grid-template-columns: 1fr 1fr !important; }
+  /* Two-col layouts stack on mobile */  
+  .two-col-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (min-width: 769px) {
+  /* Bottom nav hidden on desktop */
+  .bottom-nav { display: none !important; }
+  /* Menu button hidden on desktop */
+  .menu-btn { display: none !important; }
+  /* Sidebar always visible */
+  aside {
+    position: sticky !important;
+    left: 0 !important;
+  }
+}
