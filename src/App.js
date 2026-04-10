@@ -31,6 +31,7 @@ function PrivateRoute({ children }) {
       </div>
     );
   // return user ? children : <Navigate to="/login" replace />;
+  return children;
 }
 
 function AppRoutes() {
@@ -55,7 +56,7 @@ function AppRoutes() {
         <Route path="suporte" element={<Suporte />} />
         <Route path="configuracoes" element={<Configuracoes />} />
       </Route>
-      {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

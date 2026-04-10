@@ -8,7 +8,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [changeLayout, setChangeLayout] = useState(false);
 
   if (user) return <Navigate to="/" replace />;
 
@@ -22,103 +21,72 @@ export default function Login() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.left}>
-        <div class="batata">
+    <div className="flex min-h-screen font-sans">
+      {/* Lado esquerdo */}
+      <div className="flex-1 bg-gradient-to-br from-[#1a3a5c] to-[#0f2540] p-12 flex flex-col items-center justify-center gap-10 text-white">
+        <div className="z-10 p-4 flex flex-col items-center justify-center">
           <img
-            src="/dbv.jpeg"
-            alt="Desbravadores"
-            height="500"
-            width="500"
-            margin="center"
+            src="/dbv2.png"
+            alt="desbrada_pai "
+            height={500}
+            width={500}
+            className=""
           />
         </div>
-        {/* <div style={styles.brand}>
-          <div style={styles.logoCircle}>D</div>
-          <div>
-            <div style={styles.brandName}>DesbraSys</div>
-            <div style={styles.brandSub}>Gestão de Clubes de Desbravadores</div>
-          </div>
-        </div>
-        <div style={styles.heroText}>
-          <h1 style={styles.heroH1}>
-            Tudo que seu clube
-            <br />
-            precisa, em um só lugar.
-          </h1>
-          <p style={styles.heroP}>
-            Membros, presença, eventos, comunicação e relatórios — integrados e
-            simples.
-          </p>
-        </div>
-        <div style={styles.features}>
-          {[
-            ["👥", "Gestão completa de membros"],
-            ["✅", "Controle de presença digital"],
-            ["📊", "Relatórios automáticos"],
-            ["📢", "Comunicados em tempo real"],
-          ].map(([icon, txt]) => (
-            <div key={txt} style={styles.featureItem}>
-              <span style={styles.featureIcon}>{icon}</span>
-              <span style={styles.featureTxt}>{txt}</span>
-            </div>
-          ))}
-        </div> */}
       </div>
-      <div style={styles.right}>
-        <div style={styles.formCard}>
-          <div style={styles.formHeader}>
-            <h2 style={styles.formTitle}>Entrar</h2>
-            <p style={styles.formSub}>Acesse sua conta do clube</p>
+
+      {/* Lado direito */}
+      <div className="w-[420px] flex flex-col items-center justify-center p-10 bg-white gap-4">
+        {/* Card do formulário */}
+        <div className="bg-white rounded-2xl p-9 w-full shadow-lg border border-gray-100">
+          <div className="mb-7">
+            <h2 className="text-xl font-semibold text-gray-900">Entrar</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Acesse sua conta do clube
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <div className="form-group">
-              <label className="form-label">E-mail</label>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">
+                E-mail
+              </label>
               <input
-                className="input"
                 type="email"
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Senha</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Senha</label>
               <input
-                className="input"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
             </div>
 
-            {error && <div style={styles.errorBox}>{error}</div>}
+            {error && (
+              <div className="bg-red-50 text-red-600 border border-red-200 rounded-lg px-4 py-2.5 text-sm">
+                {error}
+              </div>
+            )}
 
             <button
               type="submit"
-              className="btn btn-primary"
-              style={{
-                width: "100%",
-                justifyContent: "center",
-                padding: "11px",
-                fontSize: "14px",
-              }}
               disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium rounded-lg py-2.5 text-sm flex items-center justify-center gap-2 transition"
             >
               {loading ? (
                 <>
-                  <span
-                    className="spinner"
-                    style={{
-                      borderColor: "rgba(255,255,255,0.3)",
-                      borderTopColor: "#fff",
-                    }}
-                  ></span>{" "}
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Entrando...
                 </>
               ) : (
@@ -127,119 +95,21 @@ export default function Login() {
             </button>
           </form>
 
-          <p style={styles.forgotPwd}>
+          <p className="text-xs text-gray-400 text-center mt-4">
             Esqueceu a senha?{" "}
-            <a href="mailto:suporte@desbrasys.com.br">Fale com o suporte</a>
+            <a
+              href="mailto:suporte@desbrasys.com.br"
+              className="text-blue-500 hover:underline"
+            >
+              Fale com o suporte
+            </a>
           </p>
         </div>
-        <p style={styles.copyright}>
+
+        <p className="text-xs text-gray-400 text-center">
           © 2026 DesbraSys — Todos os direitos reservados
         </p>
       </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    display: "flex",
-    minHeight: "100vh",
-    fontFamily: "var(--font)",
-  },
-  left: {
-    flex: 1,
-    background: "linear-gradient(160deg, #1a3a5c 0%, #0f2540 100%)",
-    padding: "48px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "40px",
-    color: "#fff",
-  },
-  brand: { display: "flex", alignItems: "center", gap: "14px" },
-  logoCircle: {
-    width: "44px",
-    height: "44px",
-    background: "#3d9be9",
-    borderRadius: "12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "20px",
-    fontWeight: "700",
-    color: "#fff",
-  },
-  brandName: { fontSize: "20px", fontWeight: "600", color: "#fff" },
-  brandSub: {
-    fontSize: "12px",
-    color: "rgba(255,255,255,0.5)",
-    marginTop: "2px",
-  },
-  heroText: { marginTop: "auto" },
-  heroH1: {
-    fontFamily: "var(--font-display)",
-    fontSize: "36px",
-    fontWeight: "400",
-    lineHeight: "1.25",
-    color: "#fff",
-    marginBottom: "16px",
-  },
-  heroP: {
-    fontSize: "15px",
-    color: "rgba(255,255,255,0.65)",
-    lineHeight: "1.7",
-    maxWidth: "380px",
-  },
-  features: { display: "flex", flexDirection: "column", gap: "12px" },
-  featureItem: { display: "flex", alignItems: "center", gap: "12px" },
-  featureIcon: { fontSize: "18px", width: "28px", textAlign: "center" },
-  featureTxt: { fontSize: "14px", color: "rgba(255,255,255,0.75)" },
-  right: {
-    width: "420px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "40px",
-    background: "var(--bg-page)",
-    gap: "16px",
-  },
-  formCard: {
-    background: "var(--bg-card)",
-    borderRadius: "20px",
-    padding: "36px",
-    width: "100%",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
-    border: "1px solid var(--border-light)",
-  },
-  formHeader: { marginBottom: "28px" },
-  formTitle: {
-    fontSize: "22px",
-    fontWeight: "600",
-    color: "var(--text-primary)",
-  },
-  formSub: {
-    fontSize: "13px",
-    color: "var(--text-secondary)",
-    marginTop: "4px",
-  },
-  form: { display: "flex", flexDirection: "column", gap: "16px" },
-  errorBox: {
-    background: "var(--danger-bg)",
-    color: "var(--danger)",
-    border: "1px solid #f5c6c2",
-    borderRadius: "var(--radius-sm)",
-    padding: "10px 14px",
-    fontSize: "13px",
-  },
-  forgotPwd: {
-    fontSize: "12px",
-    color: "var(--text-muted)",
-    textAlign: "center",
-    marginTop: "16px",
-  },
-  copyright: {
-    fontSize: "11px",
-    color: "var(--text-muted)",
-    textAlign: "center",
-  },
-};

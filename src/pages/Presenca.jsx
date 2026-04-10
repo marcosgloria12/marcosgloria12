@@ -1,207 +1,313 @@
-import { useEffect, useState } from 'react'
-import { useAuth } from '../hooks/useAuth'
-import { supabase } from '../lib/supabase'
-import { Plus, CheckCircle, XCircle, Save, X, ChevronLeft } from 'lucide-react'
-import { format, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { useEffect, useState } from "react";
+import { useAuth } from "../hooks/useAuth";
+import { supabase } from "../lib/supabase";
+import { Plus, CheckCircle, XCircle, Save, X, ChevronLeft } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-const EMPTY_EVENTO = { titulo: '', tipo: 'reuniao', data_inicio: new Date().toISOString().slice(0, 16), local: '', obrigatorio: true }
+const EMPTY_EVENTO = {
+  titulo: "",
+  tipo: "reuniao",
+  data_inicio: new Date().toISOString().slice(0, 16),
+  local: "",
+  obrigatorio: true,
+};
 
 export default function Presenca() {
-  const { perfil, canEdit } = useAuth()
-  const [eventos, setEventos] = useState([])
-  const [eventoSel, setEventoSel] = useState(null)
-  const [membros, setMembros] = useState([])
-  const [presencas, setPresencas] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [modalEvento, setModalEvento] = useState(false)
-  const [formEvento, setFormEvento] = useState(EMPTY_EVENTO)
-  const [view, setView] = useState('list') // list | registrar
+  const { perfil, canEdit } = useAuth();
+  const [eventos, setEventos] = useState([]);
+  const [eventoSel, setEventoSel] = useState(null);
+  const [membros, setMembros] = useState([]);
+  const [presencas, setPresencas] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [modalEvento, setModalEvento] = useState(false);
+  const [formEvento, setFormEvento] = useState(EMPTY_EVENTO);
+  const [view, setView] = useState("list");
 
-  useEffect(() => { if (perfil?.clube_id) loadEventos() }, [perfil])
+  useEffect(() => {
+    if (perfil?.clube_id) loadEventos();
+  }, [perfil]);
 
   const loadEventos = async () => {
-    setLoading(true)
+    setLoading(true);
     const { data } = await supabase
-      .from('eventos')
-      .select('*')
-      .eq('clube_id', perfil.clube_id)
-      .order('data_inicio', { ascending: false })
-    setEventos(data || [])
-    setLoading(false)
-  }
+      .from("eventos")
+      .select("*")
+      .eq("clube_id", perfil.clube_id)
+      .order("data_inicio", { ascending: false });
+    setEventos(data || []);
+    setLoading(false);
+  };
 
   const abrirRegistro = async (evento) => {
-    setEventoSel(evento)
-    setView('registrar')
-    // Carregar membros
-    const { data: mbs } = await supabase.from('membros').select('id, nome, classe').eq('clube_id', perfil.clube_id).eq('ativo', true).order('nome')
-    setMembros(mbs || [])
-    // Carregar presenças existentes
-    const { data: prs } = await supabase.from('presencas').select('*').eq('evento_id', evento.id)
-    const map = {}
-    ;(prs || []).forEach(p => { map[p.membro_id] = p })
-    setPresencas(map)
-  }
+    setEventoSel(evento);
+    setView("registrar");
+    const { data: mbs } = await supabase
+      .from("membros")
+      .select("id, nome, classe")
+      .eq("clube_id", perfil.clube_id)
+      .eq("ativo", true)
+      .order("nome");
+    setMembros(mbs || []);
+    const { data: prs } = await supabase
+      .from("presencas")
+      .select("*")
+      .eq("evento_id", evento.id);
+    const map = {};
+    (prs || []).forEach((p) => {
+      map[p.membro_id] = p;
+    });
+    setPresencas(map);
+  };
 
   const togglePresenca = (membroId) => {
-    setPresencas(prev => ({
+    setPresencas((prev) => ({
       ...prev,
       [membroId]: {
         ...prev[membroId],
         membro_id: membroId,
         evento_id: eventoSel.id,
-        presente: !(prev[membroId]?.presente),
-      }
-    }))
-  }
+        presente: !prev[membroId]?.presente,
+      },
+    }));
+  };
 
   const marcarTodos = (val) => {
-    const map = {}
-    membros.forEach(m => { map[m.id] = { membro_id: m.id, evento_id: eventoSel.id, presente: val } })
-    setPresencas(map)
-  }
+    const map = {};
+    membros.forEach((m) => {
+      map[m.id] = { membro_id: m.id, evento_id: eventoSel.id, presente: val };
+    });
+    setPresencas(map);
+  };
 
   const salvarPresenca = async () => {
-    setSaving(true)
-    const upserts = Object.values(presencas).map(p => ({
+    setSaving(true);
+    const upserts = Object.values(presencas).map((p) => ({
       evento_id: p.evento_id,
       membro_id: p.membro_id,
       presente: p.presente || false,
       registrado_por: perfil.id,
-    }))
-    await supabase.from('presencas').upsert(upserts, { onConflict: 'evento_id,membro_id' })
-    setSaving(false)
-    alert('Presença salva com sucesso!')
-  }
+    }));
+    await supabase
+      .from("presencas")
+      .upsert(upserts, { onConflict: "evento_id,membro_id" });
+    setSaving(false);
+    alert("Presença salva com sucesso!");
+  };
 
   const criarEvento = async () => {
-    if (!formEvento.titulo.trim()) return alert('Título obrigatório')
-    await supabase.from('eventos').insert({ ...formEvento, clube_id: perfil.clube_id, created_by: perfil.id })
-    setModalEvento(false)
-    setFormEvento(EMPTY_EVENTO)
-    loadEventos()
-  }
+    if (!formEvento.titulo.trim()) return alert("Título obrigatório");
+    await supabase
+      .from("eventos")
+      .insert({
+        ...formEvento,
+        clube_id: perfil.clube_id,
+        created_by: perfil.id,
+      });
+    setModalEvento(false);
+    setFormEvento(EMPTY_EVENTO);
+    loadEventos();
+  };
 
-  const presentes = Object.values(presencas).filter(p => p.presente).length
-  const pct = membros.length > 0 ? Math.round((presentes / membros.length) * 100) : 0
+  const presentes = Object.values(presencas).filter((p) => p.presente).length;
+  const pct =
+    membros.length > 0 ? Math.round((presentes / membros.length) * 100) : 0;
 
-  if (loading) return <div className="loading"><span className="spinner" />Carregando...</div>
+  if (loading)
+    return (
+      <div className="flex items-center gap-2 p-8 text-gray-500">
+        <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+        Carregando...
+      </div>
+    );
 
   return (
     <div className="fade-in">
-      {view === 'list' ? (
+      {view === "list" ? (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <div className="flex justify-between items-start mb-5 flex-wrap gap-3">
             <div>
-              <h1 className="page-title">Presença</h1>
-              <p className="page-subtitle">Registro de frequência por reunião e evento</p>
+              <h1 className="text-xl font-semibold text-gray-900">Presença</h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Registro de frequência por reunião e evento
+              </p>
             </div>
             {canEdit() && (
-              <button className="btn btn-primary" onClick={() => setModalEvento(true)}>
+              <button
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+                onClick={() => setModalEvento(true)}
+              >
                 <Plus size={16} /> Nova reunião
               </button>
             )}
           </div>
 
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
             {eventos.length === 0 ? (
-              <div className="empty-state"><p>Nenhum evento cadastrado ainda</p></div>
+              <div className="flex flex-col items-center gap-2 p-10 text-gray-400">
+                <p className="text-sm">Nenhum evento cadastrado ainda</p>
+              </div>
             ) : (
-              eventos.map(e => {
-                const dt = parseISO(e.data_inicio)
+              eventos.map((e) => {
+                const dt = parseISO(e.data_inicio);
                 return (
-                  <div key={e.id} style={s.eventoRow}
+                  <div
+                    key={e.id}
+                    className="flex items-center gap-3.5 px-5 py-3.5 border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => abrirRegistro(e)}
-                    onMouseEnter={el => el.currentTarget.style.background = 'var(--bg-hover)'}
-                    onMouseLeave={el => el.currentTarget.style.background = ''}
                   >
-                    <div style={s.dateBox}>
-                      <span style={s.dateDay}>{format(dt, 'dd')}</span>
-                      <span style={s.dateMon}>{format(dt, 'MMM', { locale: ptBR })}</span>
+                    <div className="w-10 h-11 bg-[#1a3a5c] rounded-lg flex flex-col items-center justify-center flex-shrink-0">
+                      <span className="text-base font-semibold text-white leading-none">
+                        {format(dt, "dd")}
+                      </span>
+                      <span className="text-[10px] text-white/60 uppercase">
+                        {format(dt, "MMM", { locale: ptBR })}
+                      </span>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '14px', fontWeight: '500' }}>{e.titulo}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        {format(dt, "HH:mm")} · {e.local || 'Local a definir'}
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">
+                        {e.titulo}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        {format(dt, "HH:mm")} · {e.local || "Local a definir"}
                       </div>
                     </div>
-                    <span className={`badge badge-${e.tipo === 'reuniao' ? 'informativo' : 'aviso'}`}>{e.tipo}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: '500' }}>Registrar →</span>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${e.tipo === "reuniao" ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700"}`}
+                    >
+                      {e.tipo}
+                    </span>
+                    <span className="text-xs text-blue-600 font-medium">
+                      Registrar →
+                    </span>
                   </div>
-                )
+                );
               })
             )}
           </div>
         </>
       ) : (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
-            <button className="btn btn-secondary btn-sm" onClick={() => setView('list')}>
+          <div className="flex items-center gap-3 mb-5 flex-wrap">
+            <button
+              className="flex items-center gap-1 text-sm border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition"
+              onClick={() => setView("list")}
+            >
               <ChevronLeft size={14} /> Voltar
             </button>
             <div>
-              <h1 className="page-title">{eventoSel?.titulo}</h1>
-              <p className="page-subtitle">{eventoSel?.data_inicio && format(parseISO(eventoSel.data_inicio), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+              <h1 className="text-xl font-semibold text-gray-900">
+                {eventoSel?.titulo}
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {eventoSel?.data_inicio &&
+                  format(
+                    parseISO(eventoSel.data_inicio),
+                    "dd/MM/yyyy 'às' HH:mm",
+                    { locale: ptBR },
+                  )}
+              </p>
             </div>
           </div>
 
           {/* Stats */}
-          <div style={s.statsRow}>
-            <div style={s.statPill}>
-              <span style={{ fontSize: '22px', fontWeight: '600', color: 'var(--success)' }}>{presentes}</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>presentes</span>
+          <div className="flex gap-3 items-center mb-3.5 flex-wrap">
+            <div className="bg-white border border-gray-100 rounded-xl px-5 py-3 flex flex-col items-center min-w-[90px]">
+              <span className="text-2xl font-semibold text-green-600">
+                {presentes}
+              </span>
+              <span className="text-xs text-gray-400">presentes</span>
             </div>
-            <div style={{ ...s.statPill, borderColor: 'var(--danger-bg)' }}>
-              <span style={{ fontSize: '22px', fontWeight: '600', color: 'var(--danger)' }}>{membros.length - presentes}</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>ausentes</span>
+            <div className="bg-white border border-gray-100 rounded-xl px-5 py-3 flex flex-col items-center min-w-[90px]">
+              <span className="text-2xl font-semibold text-red-500">
+                {membros.length - presentes}
+              </span>
+              <span className="text-xs text-gray-400">ausentes</span>
             </div>
-            <div style={{ ...s.statPill }}>
-              <span style={{ fontSize: '22px', fontWeight: '600', color: 'var(--navy)' }}>{pct}%</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>frequência</span>
+            <div className="bg-white border border-gray-100 rounded-xl px-5 py-3 flex flex-col items-center min-w-[90px]">
+              <span className="text-2xl font-semibold text-[#1a3a5c]">
+                {pct}%
+              </span>
+              <span className="text-xs text-gray-400">frequência</span>
             </div>
-            {/* Progress bar */}
-            <div style={s.progressWrap}>
-              <div style={{ ...s.progressBar, width: `${pct}%` }} />
+            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden min-w-[100px]">
+              <div
+                className="h-full bg-green-500 rounded-full transition-all duration-500"
+                style={{ width: `${pct}%` }}
+              />
             </div>
           </div>
 
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-            <button className="btn btn-secondary btn-sm" onClick={() => marcarTodos(true)}>Marcar todos presentes</button>
-            <button className="btn btn-secondary btn-sm" onClick={() => marcarTodos(false)}>Limpar todos</button>
-            <button className="btn btn-primary" onClick={salvarPresenca} disabled={saving} style={{ marginLeft: 'auto' }}>
-              {saving ? <><span className="spinner" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> Salvando...</> : <><Save size={14} /> Salvar presença</>}
+          {/* Ações */}
+          <div className="flex gap-2 mb-3 flex-wrap">
+            <button
+              className="text-sm border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition"
+              onClick={() => marcarTodos(true)}
+            >
+              Marcar todos presentes
+            </button>
+            <button
+              className="text-sm border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition"
+              onClick={() => marcarTodos(false)}
+            >
+              Limpar todos
+            </button>
+            <button
+              className="flex items-center gap-1.5 ml-auto bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition disabled:opacity-60"
+              onClick={salvarPresenca}
+              disabled={saving}
+            >
+              {saving ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />{" "}
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save size={14} /> Salvar presença
+                </>
+              )}
             </button>
           </div>
 
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            {membros.map(m => {
-              const p = presencas[m.id]
-              const presente = p?.presente || false
+          <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+            {membros.map((m) => {
+              const p = presencas[m.id];
+              const presente = p?.presente || false;
               return (
-                <div key={m.id} style={{ ...s.membroRow, background: presente ? 'rgba(42,157,92,0.04)' : '' }}
+                <div
+                  key={m.id}
+                  className={`flex items-center gap-3 px-5 py-3 border-b border-gray-50 last:border-0 cursor-pointer transition-colors ${presente ? "bg-green-50/40" : "hover:bg-gray-50"}`}
                   onClick={() => canEdit() && togglePresenca(m.id)}
-                  onMouseEnter={el => { if (!presente) el.currentTarget.style.background = 'var(--bg-hover)' }}
-                  onMouseLeave={el => { el.currentTarget.style.background = presente ? 'rgba(42,157,92,0.04)' : '' }}
                 >
-                  <div style={s.membroAv}>{m.nome.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: '500' }}>{m.nome}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{m.classe}</div>
+                  <div className="w-9 h-9 rounded-full bg-[#1a3a5c] text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                    {m.nome
+                      .split(" ")
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join("")}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: '500', color: presente ? 'var(--success)' : 'var(--text-muted)' }}>
-                      {presente ? 'Presente' : 'Ausente'}
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">
+                      {m.nome}
+                    </div>
+                    <div className="text-xs text-gray-400">{m.classe}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-sm font-medium ${presente ? "text-green-600" : "text-gray-400"}`}
+                    >
+                      {presente ? "Presente" : "Ausente"}
                     </span>
-                    {presente
-                      ? <CheckCircle size={22} color="var(--success)" fill="var(--success-bg)" />
-                      : <XCircle size={22} color="var(--border)" />
-                    }
+                    {presente ? (
+                      <CheckCircle size={22} className="text-green-500" />
+                    ) : (
+                      <XCircle size={22} className="text-gray-300" />
+                    )}
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         </>
@@ -209,21 +315,49 @@ export default function Presenca() {
 
       {/* Modal novo evento */}
       {modalEvento && (
-        <div style={s.overlay} onClick={() => setModalEvento(false)}>
-          <div style={s.modal} onClick={e => e.stopPropagation()}>
-            <div style={s.mHeader}>
-              <h2 style={{ fontSize: '16px', fontWeight: '600' }}>Nova reunião / evento</h2>
-              <button style={s.closeBtn} onClick={() => setModalEvento(false)}><X size={18} /></button>
+        <div
+          className="fixed inset-0 bg-black/45 z-[300] flex items-center justify-center p-4"
+          onClick={() => setModalEvento(false)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+              <h2 className="text-base font-semibold">Nova reunião / evento</h2>
+              <button
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-md"
+                onClick={() => setModalEvento(false)}
+              >
+                <X size={18} />
+              </button>
             </div>
-            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div className="form-group">
-                <label className="form-label">Título *</label>
-                <input className="input" value={formEvento.titulo} onChange={e => setFormEvento(f => ({ ...f, titulo: e.target.value }))} placeholder="Ex: Reunião semanal" />
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-600">
+                  Título *
+                </label>
+                <input
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={formEvento.titulo}
+                  onChange={(e) =>
+                    setFormEvento((f) => ({ ...f, titulo: e.target.value }))
+                  }
+                  placeholder="Ex: Reunião semanal"
+                />
               </div>
-              <div className="form-grid form-grid-2">
-                <div className="form-group">
-                  <label className="form-label">Tipo</label>
-                  <select className="input" value={formEvento.tipo} onChange={e => setFormEvento(f => ({ ...f, tipo: e.target.value }))}>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-600">
+                    Tipo
+                  </label>
+                  <select
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    value={formEvento.tipo}
+                    onChange={(e) =>
+                      setFormEvento((f) => ({ ...f, tipo: e.target.value }))
+                    }
+                  >
                     <option value="reuniao">Reunião</option>
                     <option value="evento">Evento</option>
                     <option value="acampamento">Acampamento</option>
@@ -231,41 +365,54 @@ export default function Presenca() {
                     <option value="outro">Outro</option>
                   </select>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Data e hora</label>
-                  <input className="input" type="datetime-local" value={formEvento.data_inicio} onChange={e => setFormEvento(f => ({ ...f, data_inicio: e.target.value }))} />
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-600">
+                    Data e hora
+                  </label>
+                  <input
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    type="datetime-local"
+                    value={formEvento.data_inicio}
+                    onChange={(e) =>
+                      setFormEvento((f) => ({
+                        ...f,
+                        data_inicio: e.target.value,
+                      }))
+                    }
+                  />
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Local</label>
-                <input className="input" value={formEvento.local} onChange={e => setFormEvento(f => ({ ...f, local: e.target.value }))} placeholder="Ex: Igreja Central — Sala 3" />
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-600">
+                  Local
+                </label>
+                <input
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={formEvento.local}
+                  onChange={(e) =>
+                    setFormEvento((f) => ({ ...f, local: e.target.value }))
+                  }
+                  placeholder="Ex: Igreja Central — Sala 3"
+                />
               </div>
             </div>
-            <div style={s.mFooter}>
-              <button className="btn btn-secondary" onClick={() => setModalEvento(false)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={criarEvento}>Criar evento</button>
+            <div className="flex gap-2 justify-end px-6 py-4 border-t border-gray-100">
+              <button
+                className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 transition"
+                onClick={() => setModalEvento(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
+                onClick={criarEvento}
+              >
+                Criar evento
+              </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  )
-}
-
-const s = {
-  eventoRow: { display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 20px', borderBottom: '1px solid var(--border-light)', cursor: 'pointer', transition: 'background 0.1s' },
-  dateBox: { width: '40px', height: '44px', background: 'var(--navy)', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  dateDay: { fontSize: '16px', fontWeight: '600', color: '#fff', lineHeight: '1' },
-  dateMon: { fontSize: '10px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' },
-  statsRow: { display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' },
-  statPill: { background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', padding: '12px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '90px' },
-  progressWrap: { flex: 1, height: '6px', background: 'var(--border-light)', borderRadius: '99px', overflow: 'hidden', minWidth: '100px' },
-  progressBar: { height: '100%', background: 'var(--success)', borderRadius: '99px', transition: 'width 0.4s' },
-  membroRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 20px', borderBottom: '1px solid var(--border-light)', cursor: 'pointer', transition: 'background 0.1s' },
-  membroAv: { width: '36px', height: '36px', borderRadius: '50%', background: 'var(--navy)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '600', flexShrink: 0 },
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' },
-  modal: { background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '480px', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' },
-  mHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border-light)' },
-  mFooter: { display: 'flex', gap: '10px', justifyContent: 'flex-end', padding: '16px 24px', borderTop: '1px solid var(--border-light)' },
-  closeBtn: { background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--text-muted)', display: 'flex', borderRadius: '6px' },
+  );
 }
