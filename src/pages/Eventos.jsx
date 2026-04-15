@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../lib/supabase";
@@ -146,117 +147,110 @@ export default function Eventos() {
         </div>
       )}
 
-      {modal && (
-        <div
-          className="fixed inset-0 bg-black/45 z-[300] flex items-center justify-center p-4"
-          onClick={() => setModal(false)}
-        >
+      {modal &&
+        createPortal(
           <div
-            className="bg-white rounded-2xl w-full max-w-lg shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => setModal(false)}
           >
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <h2 className="text-base font-semibold">Novo evento</h2>
-              <button
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-md"
-                onClick={() => setModal(false)}
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="px-6 py-5 flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Título *
-                </label>
-                <input
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  value={form.titulo}
-                  onChange={(e) => field("titulo", e.target.value)}
-                />
+            <div
+              className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-scaleIn relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+                <h2 className="text-lg font-bold text-gray-900">Novo evento</h2>
+                <button
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                  onClick={() => setModal(false)}
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+
+              {/* Form */}
+              <div className="px-6 py-5 flex flex-col gap-4 max-h-[75vh] overflow-y-auto">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-600">
-                    Tipo
-                  </label>
-                  <select
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                    value={form.tipo}
-                    onChange={(e) => field("tipo", e.target.value)}
-                  >
-                    {["reuniao", "evento", "acampamento", "culto", "outro"].map(
-                      (t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-600">
-                    Início *
+                  <label className="text-xs font-semibold text-gray-700 uppercase">
+                    Título *
                   </label>
                   <input
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                    type="datetime-local"
-                    value={form.data_inicio}
-                    onChange={(e) => field("data_inicio", e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    value={form.titulo}
+                    onChange={(e) => field("titulo", e.target.value)}
+                    placeholder="Ex: Reunião de Planejamento"
                   />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-600">
-                    Fim
-                  </label>
-                  <input
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                    type="datetime-local"
-                    value={form.data_fim}
-                    onChange={(e) => field("data_fim", e.target.value)}
-                  />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-700 uppercase">
+                      Início *
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      value={form.data_inicio}
+                      onChange={(e) => field("data_inicio", e.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-700 uppercase">
+                      Fim
+                    </label>
+                    <input
+                      type="datetime-local"
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      value={form.data_fim}
+                      onChange={(e) => field("data_fim", e.target.value)}
+                    />
+                  </div>
                 </div>
+
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-600">
+                  <label className="text-xs font-semibold text-gray-700 uppercase">
                     Local
                   </label>
                   <input
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                     value={form.local}
                     onChange={(e) => field("local", e.target.value)}
                   />
                 </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-700 uppercase">
+                    Descrição
+                  </label>
+                  <textarea
+                    rows={3}
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    value={form.descricao}
+                    onChange={(e) => field("descricao", e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Descrição
-                </label>
-                <textarea
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-                  value={form.descricao}
-                  onChange={(e) => field("descricao", e.target.value)}
-                  rows={3}
-                />
+
+              {/* Footer */}
+              <div className="flex gap-2 justify-end px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+                <button
+                  className="px-5 py-2 text-sm font-medium rounded-lg border border-gray-300 hover:bg-white transition"
+                  onClick={() => setModal(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="px-5 py-2 text-sm font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50 shadow-md"
+                  onClick={save}
+                  disabled={saving}
+                >
+                  {saving ? "Salvando..." : "Criar evento"}
+                </button>
               </div>
             </div>
-            <div className="flex gap-2 justify-end px-6 py-4 border-t border-gray-100">
-              <button
-                className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 transition"
-                onClick={() => setModal(false)}
-              >
-                Cancelar
-              </button>
-              <button
-                className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition disabled:opacity-60"
-                onClick={save}
-                disabled={saving}
-              >
-                {saving ? "Salvando..." : "Criar evento"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body, // Renderiza no nível mais alto do site
+        )}
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 
 export default function Login() {
   const { user, signIn } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,28 +17,23 @@ export default function Login() {
     setLoading(true);
     setError("");
     const err = await signIn(email, password);
-    if (err) setError("E-mail ou senha incorretos.");
-    setLoading(false);
+    if (err) {
+      setError("E-mail ou senha incorretos.");
+      setLoading(false);
+    } else {
+      navigate("/");
+    }
   };
 
   return (
     <div className="flex min-h-screen font-sans">
-      {/* Lado esquerdo */}
       <div className="flex-1 bg-gradient-to-br from-[#1a3a5c] to-[#0f2540] p-12 flex flex-col items-center justify-center gap-10 text-white">
         <div className="z-10 p-4 flex flex-col items-center justify-center">
-          <img
-            src="/dbv2.png"
-            alt="desbrada_pai "
-            height={500}
-            width={500}
-            className=""
-          />
+          <img src="/dbv2.png" alt="desbrada_pai" height={700} width={700} />
         </div>
       </div>
 
-      {/* Lado direito */}
       <div className="w-[420px] flex flex-col items-center justify-center p-10 bg-white gap-4">
-        {/* Card do formulário */}
         <div className="bg-white rounded-2xl p-9 w-full shadow-lg border border-gray-100">
           <div className="mb-7">
             <h2 className="text-xl font-semibold text-gray-900">Entrar</h2>

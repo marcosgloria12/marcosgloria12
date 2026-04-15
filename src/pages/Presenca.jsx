@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import { Plus, CheckCircle, XCircle, Save, X, ChevronLeft } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { createPortal } from "react-dom";
 
 const EMPTY_EVENTO = {
   titulo: "",
@@ -98,13 +99,11 @@ export default function Presenca() {
 
   const criarEvento = async () => {
     if (!formEvento.titulo.trim()) return alert("Título obrigatório");
-    await supabase
-      .from("eventos")
-      .insert({
-        ...formEvento,
-        clube_id: perfil.clube_id,
-        created_by: perfil.id,
-      });
+    await supabase.from("eventos").insert({
+      ...formEvento,
+      clube_id: perfil.clube_id,
+      created_by: perfil.id,
+    });
     setModalEvento(false);
     setFormEvento(EMPTY_EVENTO);
     loadEventos();
@@ -314,105 +313,109 @@ export default function Presenca() {
       )}
 
       {/* Modal novo evento */}
-      {modalEvento && (
-        <div
-          className="fixed inset-0 bg-black/45 z-[300] flex items-center justify-center p-4"
-          onClick={() => setModalEvento(false)}
-        >
+      {modalEvento &&
+        createPortal(
           <div
-            className="bg-white rounded-2xl w-full max-w-md shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => setModalEvento(false)}
           >
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <h2 className="text-base font-semibold">Nova reunião / evento</h2>
-              <button
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-md"
-                onClick={() => setModalEvento(false)}
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="px-6 py-5 flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Título *
-                </label>
-                <input
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formEvento.titulo}
-                  onChange={(e) =>
-                    setFormEvento((f) => ({ ...f, titulo: e.target.value }))
-                  }
-                  placeholder="Ex: Reunião semanal"
-                />
+            <div
+              className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-scaleIn relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+                <h2 className="text-base font-semibold">
+                  Nova reunião / evento
+                </h2>
+                <button
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-md"
+                  onClick={() => setModalEvento(false)}
+                >
+                  <X size={18} />
+                </button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="px-6 py-5 flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-600">
-                    Tipo
-                  </label>
-                  <select
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formEvento.tipo}
-                    onChange={(e) =>
-                      setFormEvento((f) => ({ ...f, tipo: e.target.value }))
-                    }
-                  >
-                    <option value="reuniao">Reunião</option>
-                    <option value="evento">Evento</option>
-                    <option value="acampamento">Acampamento</option>
-                    <option value="culto">Culto</option>
-                    <option value="outro">Outro</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-600">
-                    Data e hora
+                    Título *
                   </label>
                   <input
                     className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                    type="datetime-local"
-                    value={formEvento.data_inicio}
+                    value={formEvento.titulo}
                     onChange={(e) =>
-                      setFormEvento((f) => ({
-                        ...f,
-                        data_inicio: e.target.value,
-                      }))
+                      setFormEvento((f) => ({ ...f, titulo: e.target.value }))
                     }
+                    placeholder="Ex: Reunião semanal"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-600">
+                      Tipo
+                    </label>
+                    <select
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formEvento.tipo}
+                      onChange={(e) =>
+                        setFormEvento((f) => ({ ...f, tipo: e.target.value }))
+                      }
+                    >
+                      <option value="reuniao">Reunião</option>
+                      <option value="evento">Evento</option>
+                      <option value="acampamento">Acampamento</option>
+                      <option value="culto">Culto</option>
+                      <option value="outro">Outro</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-600">
+                      Data e hora
+                    </label>
+                    <input
+                      className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      type="datetime-local"
+                      value={formEvento.data_inicio}
+                      onChange={(e) =>
+                        setFormEvento((f) => ({
+                          ...f,
+                          data_inicio: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-600">
+                    Local
+                  </label>
+                  <input
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    value={formEvento.local}
+                    onChange={(e) =>
+                      setFormEvento((f) => ({ ...f, local: e.target.value }))
+                    }
+                    placeholder="Ex: Igreja Central — Sala 3"
                   />
                 </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-600">
-                  Local
-                </label>
-                <input
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formEvento.local}
-                  onChange={(e) =>
-                    setFormEvento((f) => ({ ...f, local: e.target.value }))
-                  }
-                  placeholder="Ex: Igreja Central — Sala 3"
-                />
+              <div className="flex gap-2 justify-end px-6 py-4 border-t border-gray-100">
+                <button
+                  className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 transition"
+                  onClick={() => setModalEvento(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
+                  onClick={criarEvento}
+                >
+                  Criar evento
+                </button>
               </div>
             </div>
-            <div className="flex gap-2 justify-end px-6 py-4 border-t border-gray-100">
-              <button
-                className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 transition"
-                onClick={() => setModalEvento(false)}
-              >
-                Cancelar
-              </button>
-              <button
-                className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
-                onClick={criarEvento}
-              >
-                Criar evento
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

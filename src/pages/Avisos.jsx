@@ -32,8 +32,10 @@ export default function Avisos() {
   };
 
   const save = async () => {
-    if (!form.titulo.trim() || !form.conteudo.trim())
-      return alert("Preencha título e conteúdo");
+    if (!form.titulo.trim() || !form.conteudo.trim()) {
+      alert("Preencha título e conteúdo");
+      return;
+    }
     setSaving(true);
     await supabase
       .from("avisos")
@@ -55,27 +57,30 @@ export default function Avisos() {
     aviso: "border-yellow-400",
     informativo: "border-blue-400",
   };
+
   const tipoBg = {
     urgente: "bg-red-50",
     aviso: "bg-yellow-50",
     informativo: "bg-blue-50",
   };
+
   const tipoBadge = {
     urgente: "bg-red-100 text-red-700",
     aviso: "bg-yellow-100 text-yellow-700",
     informativo: "bg-blue-100 text-blue-700",
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex items-center gap-2 p-8 text-gray-500">
         <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
         Carregando...
       </div>
     );
+  }
 
   return (
-    <div className="fade-in">
+    <div className="fade-in relative">
       {/* Header */}
       <div className="flex justify-between items-start mb-5 flex-wrap gap-3">
         <div>
@@ -109,7 +114,7 @@ export default function Avisos() {
             >
               <div className="flex items-start gap-3">
                 <div
-                  className={`w-9 h-9 rounded-lg ${tipoBg[a.tipo]} flex items-center justify-center flex-shrink-0 text-base`}
+                  className={`w-9 h-9 rounded-lg ${tipoBg[a.tipo]} flex items-center justify-center flex-shrink-0`}
                 >
                   {a.tipo === "urgente"
                     ? "🚨"
@@ -155,7 +160,7 @@ export default function Avisos() {
       {/* Modal */}
       {modal && (
         <div
-          className="fixed inset-0 bg-black/45 z-[300] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/60 z-[300] flex items-center justify-center p-4"
           onClick={() => setModal(false)}
         >
           <div
@@ -171,13 +176,14 @@ export default function Avisos() {
                 <X size={18} />
               </button>
             </div>
+
             <div className="px-6 py-5 flex flex-col gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-600">
                   Título *
                 </label>
                 <input
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                   value={form.titulo}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, titulo: e.target.value }))
@@ -185,6 +191,7 @@ export default function Avisos() {
                   placeholder="Título do aviso"
                 />
               </div>
+
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-600">
                   Tipo
@@ -201,30 +208,32 @@ export default function Avisos() {
                   <option value="urgente">Urgente</option>
                 </select>
               </div>
+
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-600">
                   Conteúdo *
                 </label>
                 <textarea
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                  rows={5}
                   value={form.conteudo}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, conteudo: e.target.value }))
                   }
-                  rows={5}
                   placeholder="Escreva o comunicado..."
                 />
               </div>
             </div>
-            <div className="flex gap-2 justify-end px-6 py-4 border-t border-gray-100">
+
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-gray-100">
               <button
-                className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 transition"
+                className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50"
                 onClick={() => setModal(false)}
               >
                 Cancelar
               </button>
               <button
-                className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition disabled:opacity-60"
+                className="px-4 py-2 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-60"
                 onClick={save}
                 disabled={saving}
               >

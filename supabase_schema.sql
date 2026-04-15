@@ -1,173 +1,194 @@
--- ============================================================
--- DESBRASYS - Schema completo do banco de dados (Supabase)
--- Execute no SQL Editor do Supabase
--- ============================================================
-
--- Extensões
-create extension if not exists "uuid-ossp";
+-- aqui pedi ajuda ao claude pra dar um help pra ser mais rapido
 
 -- ============================================================
--- CLUBES (multi-tenant)
+-- DESBRASYS — Schema completo para Supabase
+-- Execute no SQL Editor do Supabase (em ordem)
 -- ============================================================
-create table clubes (
-  id uuid primary key default uuid_generate_v4(),
-  nome text not null,
-  cidade text,
-  estado text,
-  regiao text,
-  ano_fundacao int,
-  logo_url text,
-  ativo boolean default true,
-  created_at timestamptz default now()
+
+-- 1. Tabela de clubes
+create table if not exists public.clubes (
+  id          uuid primary key default gen_random_uuid(),
+  nome        text not null,
+  cidade      text,
+  estado      text,
+  created_at  timestamptz default now()
 );
 
--- ============================================================
--- PERFIS DE USUÁRIO (vinculados ao auth.users do Supabase)
--- ============================================================
-create table perfis (
-  id uuid primary key references auth.users(id) on delete cascade,
-  clube_id uuid references clubes(id),
-  nome text not null,
-  email text not null,
-  telefone text,
-  foto_url text,
-  nivel_acesso text not null check (nivel_acesso in ('diretor','secretario','conselheiro','associado')),
-  ativo boolean default true,
-  created_at timestamptz default now()
+-- 2. Tabela de perfis (vinculada ao Supabase Auth)
+create table if not exists public.perfis (
+  id             uuid primary key references auth.users(id) on delete cascade,
+  nome           text not null,
+  email          text not null,
+  nivel_acesso   text not null default 'membro' check (nivel_acesso in ('admin', 'diretor', 'secretario', 'membro')),
+  clube_id       uuid references public.clubes(id),
+  ativo          boolean default true,
+  created_at     timestamptz default now()
 );
 
--- ============================================================
--- MEMBROS (desbravadores do clube)
--- ============================================================
-create table membros (
-  id uuid primary key default uuid_generate_v4(),
-  clube_id uuid references clubes(id) not null,
-  nome text not null,
-  data_nascimento date,
-  sexo text check (sexo in ('M','F')),
-  foto_url text,
-  telefone text,
-  email text,
-  nome_responsavel text,
-  telefone_responsavel text,
-  classe text default 'Amigo',
-  especialidades text[] default '{}',
-  ativo boolean default true,
-  data_ingresso date default current_date,
-  observacoes text,
-  created_at timestamptz default now()
+-- 3. Tabela de membros (desbravadores)
+create table if not exists public.membros (
+  id                    uuid primary key default gen_random_uuid(),
+  clube_id              uuid not null references public.clubes(id),
+  nome                  text not null,
+  data_nascimento       date,
+  sexo                  text check (sexo in ('M', 'F')),
+  telefone              text,
+  email                 text,
+  nome_responsavel      text,
+  telefone_responsavel  text,
+  classe                text default 'Amigo',
+  observacoes           text,
+  ativo                 boolean default true,
+  data_ingresso         date default current_date,
+  created_at            timestamptz default now()
 );
 
--- ============================================================
--- REUNIÕES / EVENTOS
--- ============================================================
-create table eventos (
-  id uuid primary key default uuid_generate_v4(),
-  clube_id uuid references clubes(id) not null,
-  titulo text not null,
-  descricao text,
-  tipo text check (tipo in ('reuniao','evento','acampamento','culto','outro')) default 'reuniao',
-  data_inicio timestamptz not null,
-  data_fim timestamptz,
-  local text,
-  obrigatorio boolean default true,
-  created_by uuid references perfis(id),
-  created_at timestamptz default now()
+-- 4. Tabela de eventos
+create table if not exists public.eventos (
+  id           uuid primary key default gen_random_uuid(),
+  clube_id     uuid not null references public.clubes(id),
+  titulo       text not null,
+  descricao    text,
+  tipo         text default 'evento' check (tipo in ('reuniao', 'evento', 'acampamento', 'culto', 'outro')),
+  data_inicio  timestamptz not null,
+  data_fim     timestamptz,
+  local        text,
+  obrigatorio  boolean default false,
+  created_by   uuid references public.perfis(id),
+  created_at   timestamptz default now()
 );
 
--- ============================================================
--- PRESENÇA
--- ============================================================
-create table presencas (
-  id uuid primary key default uuid_generate_v4(),
-  evento_id uuid references eventos(id) on delete cascade not null,
-  membro_id uuid references membros(id) on delete cascade not null,
-  presente boolean default false,
-  justificativa text,
-  registrado_por uuid references perfis(id),
+-- 5. Tabela de presenças
+create table if not exists public.presencas (
+  id         uuid primary key default gen_random_uuid(),
+  evento_id  uuid not null references public.eventos(id) on delete cascade,
+  membro_id  uuid not null references public.membros(id) on delete cascade,
+  presente   boolean default false,
   created_at timestamptz default now(),
   unique(evento_id, membro_id)
 );
 
--- ============================================================
--- AVISOS / COMUNICADOS
--- ============================================================
-create table avisos (
-  id uuid primary key default uuid_generate_v4(),
-  clube_id uuid references clubes(id) not null,
-  titulo text not null,
-  conteudo text not null,
-  tipo text check (tipo in ('aviso','urgente','informativo')) default 'aviso',
-  publicado_por uuid references perfis(id),
-  ativo boolean default true,
-  created_at timestamptz default now()
+-- 6. Tabela de avisos
+create table if not exists public.avisos (
+  id             uuid primary key default gen_random_uuid(),
+  clube_id       uuid not null references public.clubes(id),
+  titulo         text not null,
+  conteudo       text not null,
+  tipo           text default 'aviso' check (tipo in ('urgente', 'aviso', 'informativo')),
+  ativo          boolean default true,
+  publicado_por  uuid references public.perfis(id),
+  created_at     timestamptz default now()
 );
 
 -- ============================================================
--- NOTÍCIAS
+-- ROW LEVEL SECURITY (RLS)
 -- ============================================================
-create table noticias (
-  id uuid primary key default uuid_generate_v4(),
-  clube_id uuid references clubes(id) not null,
-  titulo text not null,
-  conteudo text not null,
-  imagem_url text,
-  publicado_por uuid references perfis(id),
-  publicado boolean default false,
-  created_at timestamptz default now()
-);
+
+alter table public.clubes    enable row level security;
+alter table public.perfis    enable row level security;
+alter table public.membros   enable row level security;
+alter table public.eventos   enable row level security;
+alter table public.presencas enable row level security;
+alter table public.avisos    enable row level security;
+
+-- Helper: retorna o clube_id do usuário autenticado
+create or replace function public.meu_clube_id()
+returns uuid language sql stable security definer as $$
+  select clube_id from public.perfis where id = auth.uid()
+$$;
+
+-- Helper: retorna o nivel_acesso do usuário autenticado
+create or replace function public.meu_nivel()
+returns text language sql stable security definer as $$
+  select nivel_acesso from public.perfis where id = auth.uid()
+$$;
+
+-- Clubes: todos veem o próprio clube
+create policy "ver proprio clube" on public.clubes
+  for select using (id = public.meu_clube_id());
+
+-- Perfis: cada um vê os do próprio clube
+create policy "ver perfis do clube" on public.perfis
+  for select using (clube_id = public.meu_clube_id());
+
+create policy "atualizar proprio perfil" on public.perfis
+  for update using (id = auth.uid());
+
+-- Admin pode tudo nos perfis
+create policy "admin gerencia perfis" on public.perfis
+  for all using (public.meu_nivel() in ('admin', 'diretor'));
+
+-- Membros: leitura para todos do clube, escrita para diretor+
+create policy "ver membros do clube" on public.membros
+  for select using (clube_id = public.meu_clube_id());
+
+create policy "editar membros" on public.membros
+  for all using (
+    clube_id = public.meu_clube_id()
+    and public.meu_nivel() in ('admin', 'diretor', 'secretario')
+  );
+
+-- Eventos
+create policy "ver eventos do clube" on public.eventos
+  for select using (clube_id = public.meu_clube_id());
+
+create policy "editar eventos" on public.eventos
+  for all using (
+    clube_id = public.meu_clube_id()
+    and public.meu_nivel() in ('admin', 'diretor', 'secretario')
+  );
+
+-- Presenças
+create policy "ver presencas" on public.presencas
+  for select using (
+    evento_id in (
+      select id from public.eventos where clube_id = public.meu_clube_id()
+    )
+  );
+
+create policy "editar presencas" on public.presencas
+  for all using (
+    evento_id in (
+      select id from public.eventos where clube_id = public.meu_clube_id()
+    )
+    and public.meu_nivel() in ('admin', 'diretor', 'secretario')
+  );
+
+-- Avisos
+create policy "ver avisos do clube" on public.avisos
+  for select using (clube_id = public.meu_clube_id());
+
+create policy "editar avisos" on public.avisos
+  for all using (
+    clube_id = public.meu_clube_id()
+    and public.meu_nivel() in ('admin', 'diretor', 'secretario')
+  );
 
 -- ============================================================
--- SUPORTE (tickets)
+-- TRIGGER: cria perfil automaticamente após signup
 -- ============================================================
-create table tickets_suporte (
-  id uuid primary key default uuid_generate_v4(),
-  clube_id uuid references clubes(id) not null,
-  aberto_por uuid references perfis(id) not null,
-  titulo text not null,
-  descricao text not null,
-  categoria text check (categoria in ('tecnico','duvida','sugestao','erro')) default 'duvida',
-  status text check (status in ('aberto','em_andamento','resolvido')) default 'aberto',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer as $$
+begin
+  insert into public.perfis (id, nome, email, nivel_acesso)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'nome', split_part(new.email, '@', 1)),
+    new.email,
+    coalesce(new.raw_user_meta_data->>'nivel_acesso', 'membro')
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
 
 -- ============================================================
--- ROW LEVEL SECURITY
+-- DADOS INICIAIS: clube e admin padrão
 -- ============================================================
-alter table clubes enable row level security;
-alter table perfis enable row level security;
-alter table membros enable row level security;
-alter table eventos enable row level security;
-alter table presencas enable row level security;
-alter table avisos enable row level security;
-alter table noticias enable row level security;
-alter table tickets_suporte enable row level security;
 
--- Função auxiliar: retorna clube_id do usuário logado
-create or replace function get_meu_clube_id()
-returns uuid language sql security definer
-as $$ select clube_id from perfis where id = auth.uid() $$;
-
--- Função auxiliar: retorna nível de acesso
-create or replace function get_meu_nivel()
-returns text language sql security definer
-as $$ select nivel_acesso from perfis where id = auth.uid() $$;
-
--- Políticas: usuários veem apenas dados do seu clube
-create policy "clube_proprio" on membros for all using (clube_id = get_meu_clube_id());
-create policy "clube_proprio" on eventos for all using (clube_id = get_meu_clube_id());
-create policy "clube_proprio" on avisos for all using (clube_id = get_meu_clube_id());
-create policy "clube_proprio" on noticias for all using (clube_id = get_meu_clube_id());
-create policy "clube_proprio" on tickets_suporte for all using (clube_id = get_meu_clube_id());
-create policy "perfil_proprio" on perfis for all using (id = auth.uid() or clube_id = get_meu_clube_id());
-create policy "presenca_clube" on presencas for all using (
-  evento_id in (select id from eventos where clube_id = get_meu_clube_id())
-);
-create policy "clubes_publico" on clubes for select using (true);
-
--- ============================================================
--- DADOS INICIAIS DE EXEMPLO
--- ============================================================
-insert into clubes (nome, cidade, estado, regiao, ano_fundacao)
-values ('Desbravadores Praia da Costa', 'Vila Velha', 'ES', 'Sul Espírito-Santense', 2020);
+-- Insira manualmente após criar o usuário admin via Supabase Dashboard ou signUp:
+-- update public.perfis set nivel_acesso = 'admin', clube_id = '<ID_DO_CLUBE>' where email = 'admin@seuclube.com';
